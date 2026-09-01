@@ -30,7 +30,7 @@ jobs:
       # pushes don't run a no-op `pnpm publish`.
       - name: Open Version PR (when changesets are pending)
         id: cs
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Publish when (a) the Version Packages PR is merged into main — the
