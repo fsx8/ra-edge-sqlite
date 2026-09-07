@@ -28,14 +28,14 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "rest-worker-types": "workspace:*",
-    "@libsql/client": "^0.17.0",
+    "@libsql/client": "^0.18.0",
     "commander": "^15.0.0",
     "handlebars": "^4.7.9",
-    "inquirer": "^14.0.2"
+    "inquirer": "^14.2.1",
+    "rest-worker-types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }

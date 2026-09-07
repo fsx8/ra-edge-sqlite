@@ -31,12 +31,12 @@
   },
   "dependencies": {
     "core-rest-worker": "workspace:*",
-    "rest-worker-types": "workspace:*",
-    "hono": "^4.12.29"
+    "hono": "^4.13.7",
+    "rest-worker-types": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260712.1",
-    "wrangler": "^4.110.0",
-    "vitest": "^4.1.10"
+    "@cloudflare/workers-types": "^5.20260906.1",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.129.0"
   }
 }

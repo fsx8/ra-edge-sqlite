@@ -36,7 +36,7 @@
     "ra-cloudflare-d1": "workspace:*"
   },
   "devDependencies": {
-    "ra-core": "^5.15.0",
-    "vitest": "^4.1.10"
+    "ra-core": "^5.15.3",
+    "vitest": "^4.1.11"
   }
 }
