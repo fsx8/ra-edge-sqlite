@@ -36,12 +36,13 @@ jobs:
       # Publish when (a) the Version Packages PR is merged into main — the
       # commit message carries the signal: a merge commit references the
       # `changeset-release/main` branch, a squash commit is titled
-      # "Version Packages" — or (b) the workflow is dispatched manually. The
-      # glob MUST be quoted: pnpm's `--filter` does its own micromatch
-      # expansion, while the surrounding bash shell would otherwise expand
-      # `./packages/**` into multiple path args and break the command.
+      # "Version Packages" — or (b) the workflow is dispatched manually.
+      # NOTE: do not gate on the changesets action's hasChangesets output —
+      # action v2 no longer emits it reliably in the no-changesets case
+      # (observed 2026-09: step silently skipped). The commit-message gate
+      # alone is sufficient: routine pushes never carry those markers.
       - name: Build, publish & tag release
-        if: steps.cs.outputs.hasChangesets == 'false' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'changeset-release/main') || contains(github.event.head_commit.message, 'Version Packages'))
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'changeset-release/main') || contains(github.event.head_commit.message, 'Version Packages')
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
