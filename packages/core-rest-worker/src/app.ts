@@ -9,6 +9,7 @@ import { bulkDeleteRoute } from "./routes/bulkDelete.js";
 import { bulkUpdateRoute } from "./routes/bulkUpdate.js";
 import { createRoute } from "./routes/create.js";
 import { deleteRoute } from "./routes/delete.js";
+import { allFacetsRoute, oneFacetRoute } from "./routes/facets.js";
 import { listRoute } from "./routes/list.js";
 import { oneRoute } from "./routes/one.js";
 import { schemaRoute } from "./routes/schema.js";
@@ -52,6 +53,10 @@ export function createRestApp(
 
   api.get("/__schema", (c) => schemaRoute(c, config));
   api.get("/:resource", (c) => listRoute(c, config));
+  // Facet routes must precede /:resource/:id so "__facets" is not captured
+  // as an id.
+  api.get("/:resource/__facets", (c) => allFacetsRoute(c, config));
+  api.get("/:resource/__facets/:facet", (c) => oneFacetRoute(c, config));
   api.get("/:resource/:id", (c) => oneRoute(c, config));
   api.post("/:resource", (c) => createRoute(c, config));
   api.put("/:resource/:id", (c) => updateRoute(c, config));

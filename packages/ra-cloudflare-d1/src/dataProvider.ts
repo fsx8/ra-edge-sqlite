@@ -19,11 +19,20 @@ import type {
   UpdateParams,
   UpdateResult,
 } from "ra-core";
+import type {
+  FacetResponse,
+  FacetValue,
+  SingleFacetResponse,
+} from "rest-worker-types";
 import { buildListQuery } from "./queryBuilder.js";
 import { httpClient } from "./httpClient.js";
 import { parseTotal } from "./responseParser.js";
 import { applyTransforms } from "./transforms.js";
 import type { D1ProviderOptions, D1DataProvider } from "./types.js";
+
+export type FacetsResult = FacetResponse;
+export type SingleFacetResult = SingleFacetResponse;
+export type { FacetValue };
 
 type RecordRow = Record<string, unknown>;
 
@@ -256,6 +265,23 @@ export function createD1DataProvider(
         ),
       );
       return { data: ids };
+    },
+
+    async getFacets(
+      resource: string,
+      facet?: string,
+    ): Promise<FacetsResult | SingleFacetResult> {
+      const url = `${apiUrl}/${resource}/__facets${facet ? `/${encodeURIComponent(facet)}` : ""}`;
+      const { json } = await fetchJson(url, { method: "GET" });
+      if (facet) {
+        const payload = json as SingleFacetResponse | null;
+        return {
+          facet: payload?.facet ?? facet,
+          values: payload?.values ?? [],
+        };
+      }
+      const payload = json as FacetResponse | null;
+      return { facets: payload?.facets ?? {} };
     },
   };
 

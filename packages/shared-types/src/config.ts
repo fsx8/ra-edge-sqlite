@@ -9,6 +9,31 @@ export interface SoftDeleteConfig {
   type: "timestamp" | "boolean";
 }
 
+/**
+ * Declares one facet for the `GET /:resource/__facets` endpoints.
+ *
+ * Two shapes:
+ * - plain column: distinct values of `column` with row counts;
+ * - JSON-array expansion: one value per array element across one or more
+ *   JSON-array `jsonEach` columns (JSON1 `json_each`), optionally minus the
+ *   elements of an `excludeJsonEach` column (per-row exclusion — e.g. the
+ *   "scraped + additions − removals" tag-curation pattern).
+ */
+export interface FacetConfig {
+  /** Plain column to facet over. Must be listed in selectableFields. */
+  column?: string;
+  /**
+   * One or more JSON-array columns whose elements are expanded and counted
+   * together. Must be listed in selectableFields. Mutually exclusive with
+   * `column`.
+   */
+  jsonEach?: string | string[];
+  /** JSON-array column whose per-row elements are excluded from counts. */
+  excludeJsonEach?: string;
+  /** Max distinct values returned (default 50, capped at 200). */
+  limit?: number;
+}
+
 export interface ResourceConfig {
   tableName: string;
   idField: string;
@@ -18,6 +43,8 @@ export interface ResourceConfig {
   searchableFields: string[];
   softDelete?: SoftDeleteConfig;
   transforms?: ResourceFieldTransformConfig;
+  /** Declared facets exposed via `GET /:resource/__facets[/:facet]`. */
+  facets?: Record<string, FacetConfig>;
 }
 
 export interface RateLimitBinding {

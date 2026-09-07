@@ -1,4 +1,5 @@
 import type { DataProvider } from "ra-core";
+import type { FacetResponse, SingleFacetResponse } from "rest-worker-types";
 
 export interface D1ProviderOptions {
   apiUrl: string;
@@ -12,4 +13,16 @@ export interface D1ProviderOptions {
   };
 }
 
-export type D1DataProvider = DataProvider & { supportAbortSignal?: boolean };
+/**
+ * Fetches declared facets (`GET /:resource/__facets[/:facet]`). Requires the
+ * worker resource to declare `facets` (see rest-worker-types FacetConfig).
+ */
+export type GetFacetsMethod = (
+  resource: string,
+  facet?: string,
+) => Promise<FacetResponse | SingleFacetResponse>;
+
+export type D1DataProvider = DataProvider & {
+  supportAbortSignal?: boolean;
+  getFacets?: GetFacetsMethod;
+};

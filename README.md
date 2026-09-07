@@ -135,6 +135,17 @@ export const dataProvider = createTursoDataProvider({
   configurable `maxPerPage` cap; operator suffixes (`_gt`, `_gte`, `_lt`,
   `_lte`, `_contains`, `_startsWith`, `_endsWith`), `IN` arrays, and `q`
   full-text-ish search.
+- **Logical filter groups** — `$or` / `$and` keys inside the filter JSON
+  combine sub-filters with OR/AND, arbitrarily nestable (PostgREST-style):
+  `?filter={"status":"open","$or":[{"assignee":"me"},{"priority_gte":3}]}`.
+  Fields inside groups are validated against the same `filterableFields`
+  allow-list; nesting is depth-capped and groups are member-capped.
+- **Facets** — declare `facets` on a resource to expose
+  `GET /:resource/__facets[/:facet]`: distinct values + counts for a plain
+  column, or JSON1 `json_each` expansion of one or more JSON-array columns
+  (with per-row exclusion via `excludeJsonEach`, e.g. the
+  "scraped + additions − removals" curation pattern). The react-admin
+  provider exposes this as `dataProvider.getFacets(resource, facet?)`.
 - **Soft delete** — timestamp or boolean soft-delete columns, excluded by default
   and includable via `?includeDeleted=true`.
 - **Bulk operations** — `updateMany`/`deleteMany` chunked over a single batched

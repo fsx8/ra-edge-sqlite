@@ -103,6 +103,107 @@ function buildFilterCondition(
   return { sql: `${field} = ?`, params: [value] };
 }
 
+const LOGICAL_KEYS = new Set(["$or", "$and"]);
+const MAX_LOGICAL_DEPTH = 10;
+const MAX_GROUP_MEMBERS = 100;
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Builds a recursive filter node. Regular keys become AND-composed
+ * conditions; `$or` / `$and` keys become parenthesized logical groups
+ * (mirroring PostgREST's `and=(..., or=(...))` semantics). Returns null when
+ * the node contributes no condition (e.g. empty object, `q`-only node).
+ */
+function buildFilterNode(
+  config: ResourceConfig,
+  node: unknown,
+  depth: number,
+): WhereBuildResult | null {
+  if (!isPlainObject(node)) {
+    throw new ApiError(
+      "VALIDATION_ERROR",
+      "Filter group members must be filter objects",
+    );
+  }
+  if (depth > MAX_LOGICAL_DEPTH) {
+    throw new ApiError(
+      "VALIDATION_ERROR",
+      `Filter nesting exceeds the maximum depth of ${MAX_LOGICAL_DEPTH}`,
+    );
+  }
+
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+
+  for (const [key, value] of Object.entries(node)) {
+    if (LOGICAL_KEYS.has(key)) {
+      const group = buildLogicalGroup(
+        config,
+        key as "$or" | "$and",
+        value,
+        depth,
+      );
+      conditions.push(group.sql);
+      params.push(...group.params);
+      continue;
+    }
+    const built = buildFilterCondition(config, key, value);
+    if (!built) continue;
+    conditions.push(built.sql);
+    params.push(...built.params);
+  }
+
+  if (conditions.length === 0) return null;
+  return {
+    sql:
+      conditions.length > 1 ? `(${conditions.join(" AND ")})` : conditions[0],
+    params,
+  };
+}
+
+function buildLogicalGroup(
+  config: ResourceConfig,
+  key: "$or" | "$and",
+  value: unknown,
+  depth: number,
+): WhereBuildResult {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new ApiError(
+      "VALIDATION_ERROR",
+      `Filter key '${key}' requires a non-empty array of filter objects`,
+      { key },
+    );
+  }
+  if (value.length > MAX_GROUP_MEMBERS) {
+    throw new ApiError(
+      "VALIDATION_ERROR",
+      `Filter key '${key}' exceeds the maximum of ${MAX_GROUP_MEMBERS} members`,
+      { key, members: value.length },
+    );
+  }
+
+  const members = value.map((member) => {
+    const built = buildFilterNode(config, member, depth + 1);
+    if (!built) {
+      throw new ApiError(
+        "VALIDATION_ERROR",
+        `Filter key '${key}' contains a member that produces no conditions`,
+        { key },
+      );
+    }
+    return built;
+  });
+
+  const joiner = key === "$or" ? " OR " : " AND ";
+  return {
+    sql: `(${members.map((m) => m.sql).join(joiner)})`,
+    params: members.flatMap((m) => m.params),
+  };
+}
+
 function buildQSearch(
   config: ResourceConfig,
   q: unknown,
@@ -142,6 +243,12 @@ export function buildWhereClause(
   }
 
   for (const [key, value] of Object.entries(filter ?? {})) {
+    if (LOGICAL_KEYS.has(key)) {
+      const group = buildLogicalGroup(config, key as "$or" | "$and", value, 0);
+      conditions.push(group.sql);
+      params.push(...group.params);
+      continue;
+    }
     const built = buildFilterCondition(config, key, value);
     if (!built) continue;
     conditions.push(built.sql);
