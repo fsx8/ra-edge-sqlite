@@ -1,5 +1,12 @@
 # create-d1-rest-worker
 
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [[`64b6a16`](https://github.com/fsx8/ra-edge-sqlite/commit/64b6a16b40dde05c4417a752c4222e526266d768)]:
+  - rest-worker-types@1.2.0
+
 ## 1.0.1
 
 ### Patch Changes
